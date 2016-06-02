@@ -8,20 +8,15 @@ end_date <- "2016-01-07"
 query <- sprintf("
                  SELECT *
                  FROM PostsByReadDates
-                 WHERE (created_date BETWEEN '%s' AND '%s')
                  ", start_date, end_date)
+#WHERE (created_date BETWEEN '%s' AND '%s')
 
 test <- dbGetQuery(db, query)
 
 post_ids_query <- sprintf("SELECT DISTINCT post_id FROM PostsByReadDates")
 
 post_ids <- dbGetQuery(db, post_ids_query)
-ZwynikMain <- data.frame(ReadDate=as.POSIXct(character(),
-                                             Ints=integer(),
-                                             Ints2=integer(),
-                                             Ints3=integer(),
-                                             Ints4=integer(),
-                                             stringsAsFactors=FALSE))
+InterpolatedMain <- test[0,]
 
 for (post_id in unique(test$post_id)){
 
@@ -31,6 +26,7 @@ for (post_id in unique(test$post_id)){
     read_dates_full_hour <- as.POSIXct(test2$read_date, format = "%Y_%m_%d_%H")
     read_dates <- as.POSIXct(test2$read_date, format = "%Y_%m_%d_%H%M%S")
     Zwynik <- data.frame(unique(read_dates_full_hour))
+    
     for (column in data.frame(test2$views,test2$likes,test2$comments,test2$shares))
     {    
         zs <- zoo(column, unique(read_dates_full_hour))
@@ -45,10 +41,25 @@ for (post_id in unique(test$post_id)){
         Zwynik[dim(Zwynik)[2]+1] <- as.numeric(Z[,1])
         
     }
-    cos <- c(test2[,1:8],  Zwynik[,2:5], read_dates_full_hour, test2[,14:16])
-    ZwynikMain <- rbind(ZwynikMain,Zwynik)
+    Interpolated <- cbind(test2[1:dim(Zwynik)[1],1:8],  Zwynik[,2:5], unique(read_dates_full_hour), test2[1:dim(Zwynik)[1],14:16])
+    InterpolatedMain <- rbind(InterpolatedMain,Interpolated)
 }
-test2[1:8]
-crt_tbl_command =sprintf("CREATE TABLE PostsByReadDatesInterpolated(x INTEGER PRIMARY KEY DESC, y, z);")
+#test2[1:8]
+crt_tbl_command =sprintf("CREATE TABLE PostsByReadDatesInterpolated(Id INTEGER PRIMARY KEY,\
+                                                                      post_id TEXT,\
+ video_id TEXT,\
+ created_date TEXT,\
+ length TEXT,\
+ message TEXT,\
+ labels TEXT,\
+ origin TEXT,\
+ views INTEGER,\
+ likes INTEGER,\
+ comments INTEGER,\
+ shares INTEGER,\
+ read_date TEXT,\
+ minutes_elapsed INTEGER,\
+ hours_elapsed INTEGER,\
+ filename TEXT)");
 test <- dbSendQuery(db, query)
-dbWriteTable(test,"PostsByReadDatesInterpolated",pheno)
+dbWriteTable(test,"PostsByReadDatesInterpolated",InterpolatedMain)
