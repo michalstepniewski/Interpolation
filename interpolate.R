@@ -1,0 +1,54 @@
+library(RSQLite)
+library(zoo)
+
+db <- dbConnect(SQLite(), dbname="crawl_sqlite_db_2016_01_18.db")
+dbListTables(db)
+start_date <- "2016-01-01"
+end_date <- "2016-01-07"
+query <- sprintf("
+                 SELECT *
+                 FROM PostsByReadDates
+                 WHERE (created_date BETWEEN '%s' AND '%s')
+                 ", start_date, end_date)
+
+test <- dbGetQuery(db, query)
+
+post_ids_query <- sprintf("SELECT DISTINCT post_id FROM PostsByReadDates")
+
+post_ids <- dbGetQuery(db, post_ids_query)
+ZwynikMain <- data.frame(ReadDate=as.POSIXct(character(),
+                                             Ints=integer(),
+                                             Ints2=integer(),
+                                             Ints3=integer(),
+                                             Ints4=integer(),
+                                             stringsAsFactors=FALSE))
+
+for (post_id in unique(test$post_id)){
+
+# wybrac unikalne posty
+    test2 <- test[which(test$post_id==post_id),]
+
+    read_dates_full_hour <- as.POSIXct(test2$read_date, format = "%Y_%m_%d_%H")
+    read_dates <- as.POSIXct(test2$read_date, format = "%Y_%m_%d_%H%M%S")
+    Zwynik <- data.frame(unique(read_dates_full_hour))
+    for (column in data.frame(test2$views,test2$likes,test2$comments,test2$shares))
+    {    
+        zs <- zoo(column, unique(read_dates_full_hour))
+        zc <- zoo(column, unique(read_dates))
+        z <-merge(zs,zc)
+#        z <-merge(zs,zc)
+        z$zc <- na.approx(z$zc, rule=2)
+
+        Z <- z[index(zs),]
+        #potem concatenowac to
+#        Zwynik <- merge(Zwynik,as.numeric(Z[,1]))
+        Zwynik[dim(Zwynik)[2]+1] <- as.numeric(Z[,1])
+        
+    }
+    cos <- c(test2[,1:8],  Zwynik[,2:5], read_dates_full_hour, test2[,14:16])
+    ZwynikMain <- rbind(ZwynikMain,Zwynik)
+}
+test2[1:8]
+crt_tbl_command =sprintf("CREATE TABLE PostsByReadDatesInterpolated(x INTEGER PRIMARY KEY DESC, y, z);")
+test <- dbSendQuery(db, query)
+dbWriteTable(test,"PostsByReadDatesInterpolated",pheno)
