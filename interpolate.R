@@ -10,6 +10,7 @@ query <- sprintf("
                  FROM PostsByReadDates
 WHERE (created_date BETWEEN '%s' AND '%s')
                                   ", start_date, end_date)
+# to moze byc na sliderze w shiny
 # musze zrobic to zeby jakos dzialalo na cala baze
 # moge to robic po kawalku jakos
 # problem zeby tyle naraz wczytac do pamieci
