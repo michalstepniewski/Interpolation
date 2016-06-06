@@ -12,6 +12,16 @@ DT_interval <- upload(dbname, start_date, end_date, origin)
 print (names(DT_interval))
 print (colnames(DT_interval))
 # Define UI for application that draws a histogram
+
+
+origins <- c("NowThisNews",    "NBCNews",        "SOML","buzzfeedtasty", 
+ "techinsider",    "HuffingtonPost", "BuzzFeedVideo",  "BuzzFeedFood",  
+"ajplusenglish",  "TipHero",  "tastemade",  "ajplusespanol", 
+ "cnn",            "BuzzFeedNews",   "attn",           "FoxNews",       
+"vicenews",       "Vox",            "Channel4News",   "skynews",       
+"Vocativ",  "thisisinsider",  "RYOT",  "ajplusarabi") 
+
+
 shinyUI(fluidPage(
 
   # Application title
@@ -23,13 +33,14 @@ shinyUI(fluidPage(
 #      numericInput('clusters', 'Cluster count', 3,
 #                   min = 1, max = 9),
       dateRangeInput("dates", label = h3("Date range")),
-      selectInput('publisher', 'Publisher:', unique(DT_interval$origin)),
-      selectInput('xcol', 'Variable:', names(DT_interval)[9:12]),
+      selectInput('publisher', 'Publisher:', origins),
+      selectInput('xcol', 'Variable:', c('views','likes','comments','shares')),
       sliderInput("bins",
                   "Number of bins:",
                   min = 5,
                   max = 50,
-                  value = 30)
+                  value = 30),
+      actionButton("goButton","Go!")
 #    ),
     # Generate a row with a sidebar
 #    sidebarLayout(      
@@ -47,7 +58,8 @@ shinyUI(fluidPage(
       
     # Show a plot of the generated distribution
     mainPanel(
-      plotOutput("distPlot")
+      plotOutput("distPlot"),
+      plotOutput("distPlot2")
     )
   )
 ))

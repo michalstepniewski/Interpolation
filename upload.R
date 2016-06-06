@@ -13,7 +13,7 @@ AND (origin = '%s')
 ", start_date, end_date, origin)
   
   db_prefix <- substr(dbname, start = 0, stop = nchar(dbname)-3)
-  file_name <- sprintf("RDS_tmp_files/%s_%s_%s.RDS", db_prefix, start_date, end_date)
+  file_name <- sprintf("RDS_tmp_files/%s_%s_%s_%s.RDS", db_prefix, start_date, end_date, origin)
   if (file.exists(file_name)) 
     return( readRDS(file_name) )
   
