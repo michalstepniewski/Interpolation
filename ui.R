@@ -40,7 +40,9 @@ shinyUI(fluidPage(
                   min = 5,
                   max = 50,
                   value = 30),
-      actionButton("goButton","Go!")
+      actionButton("goButton","Go!"),
+      titlePanel("Hello World!")
+      
 #    ),
     # Generate a row with a sidebar
 #    sidebarLayout(      
