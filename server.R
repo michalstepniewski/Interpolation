@@ -58,14 +58,28 @@ shinyServer(function(input, output) {
       #    print (x)
       # draw the histogram with the specified number of bins
 #      hist(x, breaks = bins, col = 'skyblue', border = 'white')
-      DT_interval_cumulative <- DT_interval[ , .(sum_likes = max(likes),
-                                                 sum_comments = max(comments),
-                                                 sum_shares = max(shares), 
-                                                 sum_views = max(views)),
+  #   DT_interval_cumulative <- DT_interval[ , .(sum_likes = max(likes),
+  #                                               sum_comments = max(comments),
+  #                                               sum_shares = max(shares), 
+  #                                               sum_views = max(views)),
+  #                                           by = .(origin, read_date) ]
+      DT_interval_cumulative <- DT_interval[ , .(sum_likes = sum(likes),
+                                                 sum_comments = sum(comments),
+                                                 sum_shares = sum(shares), 
+                                                 sum_views = sum(views)),
                                              by = .(origin, read_date) ]
+      
       print (DT_interval_cumulative$origin)
-      qplot(read_date, sum_likes, data=DT_interval_cumulative, colour = 'red', main = DT_interval_cumulative$origin, log = 'y',geom = "line", ylab ="stats") + geom_line(aes(read_date, sum_comments), data=DT_interval_cumulative,colour='blue')+geom_line(aes(read_date, sum_shares), data=DT_interval_cumulative,colour='green')+geom_line(aes(read_date, sum_views), data=DT_interval_cumulative,colour='yellow')  +
-        scale_colour_manual(values=c("red","green","blue"))
+# for origin in unique(DT_interval_cumulative$origin)
+#      qplot(read_date, sum_likes, data=DT_interval_cumulative[DT_interval_cumulative$origin == origin], colour = 'red', main = DT_interval_cumulative$origin, log = 'n',geom = "line", ylab ="stats")#  + geom_line(aes(read_date, sum_comments), data=DT_interval_cumulative,colour='blue')#+geom_line(aes(read_date, sum_shares), data=DT_interval_cumulative,colour='green')#+geom_line(aes(read_date, sum_views), data=DT_interval_cumulative,colour='yellow')  +
+
+      plot(read_date, sum_likes, data=DT_interval_cumulative[DT_interval_cumulative$origin %in% c("buzzfeedtasty")], colour = 'red', main = DT_interval_cumulative$origin, log = 'n',geom = "line", ylab ="stats")
+      p <- ggplot(data=dfp, aes(x=data$read_date))
+      p <- p + geom_line(aes_string(y = data$sum_shares, color = shQuote(2)))
+#      qplot(read_date, sum_likes, data=DT_interval_cumulative[DT_interval_cumulative$origin %in% c("buzzfeedtasty")], colour = 'red', main = DT_interval_cumulative$origin, log = 'n',geom = "line", ylab ="stats")
+#      + geom_line(aes(read_date, sum_likes), data=DT_interval_cumulative[DT_interval_cumulative$origin %in% c("NowThisNews")],colour='blue')
+      #+geom_line(aes(read_date, sum_shares), data=DT_interval_cumulative,colour='green')#+geom_line(aes(read_date, sum_views), data=DT_interval_cumulative,colour='yellow')  +
+#        scale_colour_manual(values=c("red","green","blue"))
     })
     
     
