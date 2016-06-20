@@ -69,14 +69,25 @@ shinyServer(function(input, output) {
                                                  sum_views = sum(views)),
                                              by = .(origin, read_date) ]
       
-      print (DT_interval_cumulative$origin)
-# for origin in unique(DT_interval_cumulative$origin)
-#      qplot(read_date, sum_likes, data=DT_interval_cumulative[DT_interval_cumulative$origin == origin], colour = 'red', main = DT_interval_cumulative$origin, log = 'n',geom = "line", ylab ="stats")#  + geom_line(aes(read_date, sum_comments), data=DT_interval_cumulative,colour='blue')#+geom_line(aes(read_date, sum_shares), data=DT_interval_cumulative,colour='green')#+geom_line(aes(read_date, sum_views), data=DT_interval_cumulative,colour='yellow')  +
-
-      plot(read_date, sum_likes, data=DT_interval_cumulative[DT_interval_cumulative$origin %in% c("buzzfeedtasty")], colour = 'red', main = DT_interval_cumulative$origin, log = 'n',geom = "line", ylab ="stats")
-      p <- ggplot(data=dfp, aes(x=data$read_date))
-      p <- p + geom_line(aes_string(y = data$sum_shares, color = shQuote(2)))
-#      qplot(read_date, sum_likes, data=DT_interval_cumulative[DT_interval_cumulative$origin %in% c("buzzfeedtasty")], colour = 'red', main = DT_interval_cumulative$origin, log = 'n',geom = "line", ylab ="stats")
+#      print (DT_interval_cumulative$origin)
+#      qplot(read_date, sum_likes, data=DT_interval_cumulative[DT_interval_cumulative$origin %in% c("buzzfeedtasty")], colour = 'red', main = DT_interval_cumulative$origin, log = 'n',geom = "line", ylab ="stats")#  + geom_line(aes(read_date, sum_comments), data=DT_interval_cumulative,colour='blue')#+geom_line(aes(read_date, sum_shares), data=DT_interval_cumulative,colour='green')#+geom_line(aes(read_date, sum_views), data=DT_interval_cumulative,colour='yellow')  +
+#      p <- ggplot(data=DT_interval_cumulative, aes(x=data$read_date))
+    #  ggplot(data=DT_interval_cumulative)#, aes(x=data$read_date))
+      plot(data$read_date, data$sum_likes, data=DT_interval_cumulative[DT_interval_cumulative$origin %in% c("buzzfeedtasty")], colour = 'red', main = "Graf", geom = "line", ylab ="stats")
+      #      p
+      
+#        for (origin in unique(DT_interval_cumulative$origin)[1]) 
+#  {
+#          data=DT_interval_cumulative[DT_interval_cumulative$origin %in% origin]
+          #      plot(read_date, sum_likes, data=DT_interval_cumulative[DT_interval_cumulative$origin %in% c("buzzfeedtasty")], colour = 'red', main = DT_interval_cumulative$origin, log = 'n',geom = "line", ylab ="stats")
+          #      data <- DT_interval_cumulative[DT_interval_cumulative$origin %in% c("buzzfeedtasty")]
+          #      p
+          #      p <- p + geom_line(aes_string(y = data$sum_shares))#, color = shQuote(2)))
+#          p <- p + geom_line(aes_string(y = data$sum_shares, x=data$read_date,  color = shQuote(2)))
+#          p
+#        }   
+      
+      #      qplot(read_date, sum_likes, data=DT_interval_cumulative[DT_interval_cumulative$origin %in% c("buzzfeedtasty")], colour = 'red', main = DT_interval_cumulative$origin, log = 'n',geom = "line", ylab ="stats")
 #      + geom_line(aes(read_date, sum_likes), data=DT_interval_cumulative[DT_interval_cumulative$origin %in% c("NowThisNews")],colour='blue')
       #+geom_line(aes(read_date, sum_shares), data=DT_interval_cumulative,colour='green')#+geom_line(aes(read_date, sum_views), data=DT_interval_cumulative,colour='yellow')  +
 #        scale_colour_manual(values=c("red","green","blue"))
@@ -92,31 +103,31 @@ shinyServer(function(input, output) {
 
 
 
-DT_interval_cumulative <- DT_interval[ , .(sum_likes = max(likes),
-                                           sum_comments = max(comments),
-                                           sum_shares = max(shares),
-                                           sum_views = max(views)),
-                                       by = .(post_id, origin, read_date) ]
+#DT_interval_cumulative <- DT_interval[ , .(sum_likes = max(likes),
+#                                           sum_comments = max(comments),
+#                                           sum_shares = max(shares),
+#                                           sum_views = max(views)),
+#                                       by = .(post_id, origin, read_date) ]
 
-max_ids_per_plot <- 1
+#max_ids_per_plot <- 1
 
 
-this_origin <- origin
+#this_origin <- origin
 
-post_ids_for_this_origin <- unique(DT_interval_cumulative[origin == this_origin]$post_id)
+#post_ids_for_this_origin <- unique(DT_interval_cumulative[origin == this_origin]$post_id)
 
-n_of_groups <- ceiling(length(post_ids_for_this_origin)/max_ids_per_plot)
+#n_of_groups <- ceiling(length(post_ids_for_this_origin)/max_ids_per_plot)
 
-for (j in 1:n_of_groups) {
+#for (j in 1:n_of_groups) {
   
-  particular_ids <- unlist(split(post_ids_for_this_origin, ceiling(seq_along(post_ids_for_this_origin)/max_ids_per_plot))[j])
+#  particular_ids <- unlist(split(post_ids_for_this_origin, ceiling(seq_along(post_ids_for_this_origin)/max_ids_per_plot))[j])
   
-  DT_interval_cumulative_snippet <- DT_interval_cumulative[ origin == this_origin & post_id %in% particular_ids ]
+#  DT_interval_cumulative_snippet <- DT_interval_cumulative[ origin == this_origin & post_id %in% particular_ids ]
   
-  p <- qplot(read_date, sum_likes, data=DT_interval_cumulative_snippet, colour = 'red', main = DT_interval_cumulative_snippet$post_id, log = 'y',geom = "line", ylab ="stats") + geom_line(aes(read_date, sum_comments), data=DT_interval_cumulative_snippet,colour='blue')+geom_line(aes(read_date, sum_shares), data=DT_interval_cumulative_snippet,colour='green')+geom_line(aes(read_date, sum_views), data=DT_interval_cumulative_snippet,colour='yellow')  +
-    scale_colour_manual(values=c("red","green","blue"))# + #+ geom_smooth()
+#  p <- qplot(read_date, sum_likes, data=DT_interval_cumulative_snippet, colour = 'red', main = DT_interval_cumulative_snippet$post_id, log = 'y',geom = "line", ylab ="stats") + geom_line(aes(read_date, sum_comments), data=DT_interval_cumulative_snippet,colour='blue')+geom_line(aes(read_date, sum_shares), data=DT_interval_cumulative_snippet,colour='green')+geom_line(aes(read_date, sum_views), data=DT_interval_cumulative_snippet,colour='yellow')  +
+#    scale_colour_manual(values=c("red","green","blue"))# + #+ geom_smooth()
   #theme(legend.position="bottom",
   #       legend.title=element_blank())+
   #   ggtitle("Line plot")
 #  show(p)
-}  
+#}  
