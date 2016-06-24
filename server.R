@@ -1,190 +1,130 @@
+
+# This is the server logic for a Shiny web application.
+# You can find out more about building applications with Shiny here:
+#
+# http://shiny.rstudio.com
+#
+
 library(shiny)
+library(readr)
+library(magrittr)
+library(tidyr)
+library(dplyr)
 library(ggplot2)
-source("upload.R")
-source("upload_all_origins.R")
+library(RColorBrewer)
+library(Cairo)
 
-start_date <- "2016-01-07"                 # insert start date for post analysis
-end_date <- "2016-01-14"                   # insert end date for post analysis
-dbname <- "crawl_sqlite_db_2016_01_18.db"  # insert database filename
-origin <- "NowThisNews"
+df_tb <- read_tsv("data/OTIS 2013 TB Data.txt", n_max = 1069, col_types = "-ciiii?di")
 
-DT_interval <- upload(dbname, start_date, end_date, origin)
 
-print ("loaded database")
-# Define server logic required to draw a histogram
-shinyServer(function(input, output) 
+shinyServer(function(input, output) {
   
-   {
-
-  # Expression that generates a histogram. The expression is
-  # wrapped in a call to renderPlot to indicate that:
-  #
-  #  1) It is "reactive" and therefore should re-execute automatically
-  #     when inputs change
-  #  2) Its output type is a plot
-
-   output$distPlot <- renderPlot({
-       input$goButton
-
-       isolate 
-           ({
-           print ('uploading/reuploading')
-           system.time(DT_interval <- upload(dbname, input$dates[1], input$dates[2],input$publisher))
-           print ('uploaded/reuploaded')
-           x    <- DT_interval[,get(input$xcol)] #[, 2]  # Old Faithful Geyser data
-
-           bins <- seq(min(x), max(x), length.out = input$bins + 1)
-           #    print (x)
-           # draw the histogram with the specified number of bins
-           hist(x, breaks = bins, col = 'skyblue', border = 'white')
-           }) # close 'isolate'
-
-       }) # closes output$distPlot <- renderPlot
-
-   output$distPlot2 <- renderPlot({
-       #    print (input$xcol)
-       #    print (DT_interval$views)
-       #    print ()
-       input$goButton
-       isolate
-       
-           ({
-           print ('uploading/reuploading')
-#           system.time(DT_interval <- upload_all_origins(dbname, input$dates[1], input$dates[2]))
-           print (DT_interval$origin)
-           print ('uploaded/reuploaded')
-           x    <- DT_interval[,get(input$xcol)] #[, 2]  # Old Faithful Geyser data
-      
-           #bins <- seq(min(x), max(x), length.out = input$bins + 1)
-           #    print (x)
-           # draw the histogram with the specified number of bins
-           #      hist(x, breaks = bins, col = 'skyblue', border = 'white')
-           #   DT_interval_cumulative <- DT_interval[ , .(sum_likes = max(likes),
-           #                                               sum_comments = max(comments),
-           #                                               sum_shares = max(shares), 
-           #                                               sum_views = max(views)),
-           #                                           by = .(origin, read_date) ]
-           DT_interval_cumulative <- DT_interval[ , .(sum_likes = sum(likes),
-                                                      sum_comments = sum(comments),
-                                                      sum_shares = sum(shares), 
-                                                      sum_views = sum(views)),
-                                                      by = .(origin, read_date) ]
-      
-           #      print (DT_interval_cumulative$origin)
-#           qplot(read_date, sum_likes, data=DT_interval_cumulative[DT_interval_cumulative$origin %in% c("buzzfeedtasty")], colour = 'red', main = DT_interval_cumulative$origin, log = 'n',geom = "line", ylab ="stats")#  + geom_line(aes(read_date, sum_comments), data=DT_interval_cumulative,colour='blue')#+geom_line(aes(read_date, sum_shares), data=DT_interval_cumulative,colour='green')#+geom_line(aes(read_date, sum_views), data=DT_interval_cumulative,colour='yellow')  +
-           #      p <- ggplot(data=DT_interval_cumulative, aes(x=data$read_date))
-           #  ggplot(data=DT_interval_cumulative)#, aes(x=data$read_date))
-           plot(data$read_date, data$sum_likes, data=DT_interval_cumulative[DT_interval_cumulative$origin %in% c("buzzfeedtasty")], colour = 'red', main = "Graf", geom = "line", ylab ="stats")
-           #      p
-      
-           #        for (origin in unique(DT_interval_cumulative$origin)[1]) 
-           #  {
-           #          data=DT_interval_cumulative[DT_interval_cumulative$origin %in% origin]
-           #      plot(read_date, sum_likes, data=DT_interval_cumulative[DT_interval_cumulative$origin %in% c("buzzfeedtasty")], colour = 'red', main = DT_interval_cumulative$origin, log = 'n',geom = "line", ylab ="stats")
-           #      data <- DT_interval_cumulative[DT_interval_cumulative$origin %in% c("buzzfeedtasty")]
-           #      p
-           #      p <- p + geom_line(aes_string(y = data$sum_shares))#, color = shQuote(2)))
-           #          p <- p + geom_line(aes_string(y = data$sum_shares, x=data$read_date,  color = shQuote(2)))
-           #          p
-           #        }   
-      
-           #      qplot(read_date, sum_likes, data=DT_interval_cumulative[DT_interval_cumulative$origin %in% c("buzzfeedtasty")], colour = 'red', main = DT_interval_cumulative$origin, log = 'n',geom = "line", ylab ="stats")
-           #      + geom_line(aes(read_date, sum_likes), data=DT_interval_cumulative[DT_interval_cumulative$origin %in% c("NowThisNews")],colour='blue')
-           #+geom_line(aes(read_date, sum_shares), data=DT_interval_cumulative,colour='green')#+geom_line(aes(read_date, sum_views), data=DT_interval_cumulative,colour='yellow')  +
-           #        scale_colour_manual(values=c("red","green","blue"))
-      
-           })  # closes 'isolate'
+  output$nationPlot <- renderPlot({
     
-       })  # closes output$distPlot2 <- renderPlot
+    df_tb %>% 
+      group_by(Year) %>% 
+      summarise(n_cases = sum(Count), pop = sum(Population), us_rate = (n_cases / pop * 100000)) %>% 
+      ggplot() +
+      labs(x = "Year reported",
+           y = "TB Cases per 100,000 residents",
+           title = "Reported Active Tuberculosis Cases in the U.S.") +
+      theme_minimal() +
+      geom_line(aes(x = Year, y = us_rate))
+  })
 
-   output$distPlot3 <- renderPlot({
-       #    print (input$xcol)
-       #    print (DT_interval$views)
-       #    print ()
-       input$goButton
-       isolate
-     
-           ({
-#           print ('uploading/reuploading')
-#           system.time(DT_interval <- upload_all_origins(dbname, input$dates[1], input$dates[2]))
-           print (DT_interval$origin)
-           print ('uploaded/reuploaded')
-           x    <- DT_interval[,get(input$xcol)] #[, 2]  # Old Faithful Geyser data
-       
-           #bins <- seq(min(x), max(x), length.out = input$bins + 1)
-           #    print (x)
-           # draw the histogram with the specified number of bins
-           #      hist(x, breaks = bins, col = 'skyblue', border = 'white')
-           #   DT_interval_cumulative <- DT_interval[ , .(sum_likes = max(likes),
-           #                                               sum_comments = max(comments),
-           #                                               sum_shares = max(shares), 
-           #                                               sum_views = max(views)),
-           #                                           by = .(origin, read_date) ]
-           DT_interval_cumulative <- DT_interval[ , .(sum_likes = sum(likes),
-                                                      sum_comments = sum(comments),
-                                                      sum_shares = sum(shares), 
-                                                      sum_views = sum(views)),
-                                                      by = .(origin, read_date) ]
-       
-           #      print (DT_interval_cumulative$origin)
-           print ('qplotting')
-           data_buzzfeedtasty <- DT_interval_cumulative[DT_interval_cumulative$origin %in% c("buzzfeedtasty")]
-           qplot(data$read_date, data$sum_likes, data=data_buzzfeedtasty)#, color = 'red')#, main = DT_interval_cumulative$origin, log = 'n',geom = "line", ylab ="stats")#  + geom_line(aes(read_date, sum_comments), data=DT_interval_cumulative,colour='blue')#+geom_line(aes(read_date, sum_shares), data=DT_interval_cumulative,colour='green')#+geom_line(aes(read_date, sum_views), data=DT_interval_cumulative,colour='yellow')  +
-           #      p <- ggplot(data=DT_interval_cumulative, aes(x=data$read_date))
-           #  ggplot(data=DT_interval_cumulative)#, aes(x=data$read_date))
-           # plot(data$read_date, data$sum_likes, data=DT_interval_cumulative[DT_interval_cumulative$origin %in% c("buzzfeedtasty")], colour = 'red', main = "Graf", geom = "line", ylab ="stats")
-           #      p
-       
-           #        for (origin in unique(DT_interval_cumulative$origin)[1]) 
-           #  {
-           #          data=DT_interval_cumulative[DT_interval_cumulative$origin %in% origin]
-           #      plot(read_date, sum_likes, data=DT_interval_cumulative[DT_interval_cumulative$origin %in% c("buzzfeedtasty")], colour = 'red', main = DT_interval_cumulative$origin, log = 'n',geom = "line", ylab ="stats")
-           #      data <- DT_interval_cumulative[DT_interval_cumulative$origin %in% c("buzzfeedtasty")]
-           #      p
-           #      p <- p + geom_line(aes_string(y = data$sum_shares))#, color = shQuote(2)))
-           #          p <- p + geom_line(aes_string(y = data$sum_shares, x=data$read_date,  color = shQuote(2)))
-           #          p
-           #        }   
-       
-           #      qplot(read_date, sum_likes, data=DT_interval_cumulative[DT_interval_cumulative$origin %in% c("buzzfeedtasty")], colour = 'red', main = DT_interval_cumulative$origin, log = 'n',geom = "line", ylab ="stats")
-           #      + geom_line(aes(read_date, sum_likes), data=DT_interval_cumulative[DT_interval_cumulative$origin %in% c("NowThisNews")],colour='blue')
-           #+geom_line(aes(read_date, sum_shares), data=DT_interval_cumulative,colour='green')#+geom_line(aes(read_date, sum_views), data=DT_interval_cumulative,colour='yellow')  +
-           #        scale_colour_manual(values=c("red","green","blue"))
-       
-           })  # closes 'isolate'
-     
-       })  # closes output$distPlot3 <- renderPlot
-   
-     
-   }) # closes shinyServer
-
-
-
-#DT_interval_cumulative <- DT_interval[ , .(sum_likes = max(likes),
-#                                           sum_comments = max(comments),
-#                                           sum_shares = max(shares),
-#                                           sum_views = max(views)),
-#                                       by = .(post_id, origin, read_date) ]
-
-#max_ids_per_plot <- 1
-
-
-#this_origin <- origin
-
-#post_ids_for_this_origin <- unique(DT_interval_cumulative[origin == this_origin]$post_id)
-
-#n_of_groups <- ceiling(length(post_ids_for_this_origin)/max_ids_per_plot)
-
-#for (j in 1:n_of_groups) {
+  output$nationPlot2 <- renderPlot({
+    
+    df_tb %>% 
+      group_by(Year) %>% 
+      summarise(n_cases = sum(Count), pop = sum(Population), us_rate = (n_cases / pop * 100000)) %>% 
+      ggplot() +
+      labs(x = "Year reported",
+           y = "TB Cases per 100,000 residents",
+           title = "Reported Active Tuberculosis Cases in the U.S.") +
+      theme_minimal() +
+      geom_line(aes(x = Year, y = us_rate))
+  })
   
-#  particular_ids <- unlist(split(post_ids_for_this_origin, ceiling(seq_along(post_ids_for_this_origin)/max_ids_per_plot))[j])
+    
+  output$statePlot <- renderPlot({
+    # generate bins based on input$labels from ui.R
+    
+    top_states <- df_tb %>% 
+      filter(Year == 2013) %>% 
+      arrange(desc(Rate)) %>% 
+      slice(1:input$nlabels) %>% 
+      select(State)
+    
+    df_tb$top_state <- factor(df_tb$State, levels = c(top_states$State, "Other"))
+    df_tb$top_state[is.na(df_tb$top_state)] <- "Other"
+    df_tb %>% 
+      ggplot() +
+      labs(x = "Year reported",
+           y = "TB Cases per 100,000 residents",
+           title = "Reported Active Tuberculosis Cases in the U.S.") +
+      theme_minimal() +
+      geom_line(aes(x = Year, y = Rate, group = State, colour = top_state, size = top_state)) +
+      scale_colour_manual(values = c(brewer.pal(n = input$nlabels, "Paired"), "grey"), guide = guide_legend(title = "State")) +
+      scale_size_manual(values = c(rep(1,input$nlabels), 0.5), guide = guide_legend(title = "State")) 
+  })
+
+  output$PostAnalytics <- renderPlot({
+    # generate bins based on input$labels from ui.R
+    
+    top_states <- df_tb %>% 
+      filter(Year == 2013) %>% 
+      arrange(desc(Rate)) %>% 
+      slice(1:input$nPosts) %>% 
+      select(State)
+    
+    df_tb$top_state <- factor(df_tb$State, levels = c(top_states$State, "Other"))
+    df_tb$top_state[is.na(df_tb$top_state)] <- "Other"
+    df_tb %>% 
+      ggplot() +
+      labs(x = "Date",
+           y = "views, likes, shares or comments",
+           title = "Number of views, likes, shares or comments development in time") +
+      theme_minimal() +
+      geom_line(aes(x = Year, y = Rate, group = State, colour = top_state, size = top_state)) +
+      scale_colour_manual(values = c(brewer.pal(n = input$nPosts, "Paired"), "grey"), guide = guide_legend(title = "Post ID")) +
+      scale_size_manual(values = c(rep(1,input$nPosts), 0.5), guide = guide_legend(title = "Post ID")) 
+  })  
+
+  output$CompetitionAnalytics <- renderPlot({
+    # generate bins based on input$labels from ui.R
+    
+    top_states <- df_tb %>% 
+      filter(Year == 2013) %>% 
+      arrange(desc(Rate)) %>% 
+      slice(1:input$nPublishers) %>% 
+      select(State)
+    
+    df_tb$top_state <- factor(df_tb$State, levels = c(top_states$State, "Other"))
+    df_tb$top_state[is.na(df_tb$top_state)] <- "Other"
+    df_tb %>% 
+      ggplot() +
+      labs(x = "Date",
+           y = "views,likes,shares or comments",
+           title = "Views, likes, shares or comments development in time") +
+      theme_minimal() +
+      geom_line(aes(x = Year, y = Rate, group = State, colour = top_state, size = top_state)) +
+      scale_colour_manual(values = c(brewer.pal(n = input$nPublishers, "Paired"), "grey"), guide = guide_legend(title = "Publisher")) +
+      scale_size_manual(values = c(rep(1,input$nPublishers), 0.5), guide = guide_legend(title = "Publisher")) 
+  })  
   
-#  DT_interval_cumulative_snippet <- DT_interval_cumulative[ origin == this_origin & post_id %in% particular_ids ]
+  output$selectState <- renderUI({ 
+    selectInput(inputId = "state", label = "Which post?", choices = unique(df_tb$State), selected = "Alabama", multiple = FALSE)
+  })
   
-#  p <- qplot(read_date, sum_likes, data=DT_interval_cumulative_snippet, colour = 'red', main = DT_interval_cumulative_snippet$post_id, log = 'y',geom = "line", ylab ="stats") + geom_line(aes(read_date, sum_comments), data=DT_interval_cumulative_snippet,colour='blue')+geom_line(aes(read_date, sum_shares), data=DT_interval_cumulative_snippet,colour='green')+geom_line(aes(read_date, sum_views), data=DT_interval_cumulative_snippet,colour='yellow')  +
-#    scale_colour_manual(values=c("red","green","blue"))# + #+ geom_smooth()
-  #theme(legend.position="bottom",
-  #       legend.title=element_blank())+
-  #   ggtitle("Line plot")
-#  show(p)
-#}  
+  output$iStatePlot <- renderPlot({
+    df_tb %>% 
+      filter(State == input$state) %>% 
+      ggplot() +
+      labs(x = "Year reported",
+           y = "TB Cases per 100,000 residents",
+           title = "Reported Active Tuberculosis Cases in the U.S.") +
+      theme_minimal() +
+      geom_line(aes(x = Year, y = Rate))
+  })
+  
+})
